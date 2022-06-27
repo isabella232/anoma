@@ -290,9 +290,9 @@ mod test_process_proposal {
             vec![],
             Some(TxType::Wrapper(wrapper).try_to_vec().expect("Test failed")),
         )
-        .to_bytes();
+            .to_bytes();
         #[allow(clippy::redundant_clone)]
-        let request = ProcessProposal { tx: tx.clone() };
+            let request = ProcessProposal { tx: tx.clone() };
 
         let response = shell.process_proposal(request);
         assert_eq!(response.result.code, u32::from(ErrorCodes::InvalidSig));
@@ -328,19 +328,19 @@ mod test_process_proposal {
             tx,
             Default::default(),
         )
-        .sign(&keypair)
-        .expect("Test failed");
+            .sign(&keypair)
+            .expect("Test failed");
         let new_tx = if let Some(Ok(SignedTxData {
-            data: Some(data),
-            sig,
-        })) = wrapper
+                                        data: Some(data),
+                                        sig,
+                                    })) = wrapper
             .data
             .take()
             .map(|data| SignedTxData::try_from_slice(&data[..]))
         {
             let mut new_wrapper = if let TxType::Wrapper(wrapper) =
-                <TxType as BorshDeserialize>::deserialize(&mut data.as_ref())
-                    .expect("Test failed")
+            <TxType as BorshDeserialize>::deserialize(&mut data.as_ref())
+                .expect("Test failed")
             {
                 wrapper
             } else {
@@ -359,8 +359,8 @@ mod test_process_proposal {
                         sig,
                         data: Some(new_data),
                     }
-                    .try_to_vec()
-                    .expect("Test failed"),
+                        .try_to_vec()
+                        .expect("Test failed"),
                 ),
                 timestamp,
             }
@@ -407,8 +407,8 @@ mod test_process_proposal {
             tx,
             Default::default(),
         )
-        .sign(&keypair)
-        .expect("Test failed");
+            .sign(&keypair)
+            .expect("Test failed");
         let request = ProcessProposal {
             tx: wrapper.to_bytes(),
         };
@@ -457,8 +457,8 @@ mod test_process_proposal {
             tx,
             Default::default(),
         )
-        .sign(&keypair)
-        .expect("Test failed");
+            .sign(&keypair)
+            .expect("Test failed");
 
         let request = ProcessProposal {
             tx: wrapper.to_bytes(),
@@ -605,7 +605,7 @@ mod test_process_proposal {
             shell.enqueue_tx(wrapper.clone());
             Tx::from(TxType::Decrypted(DecryptedTx::Undecryptable(
                 #[allow(clippy::redundant_clone)]
-                wrapper.clone(),
+                    wrapper.clone(),
             )))
         } else {
             wrapper.sign(&keypair).expect("Test failed")
@@ -619,7 +619,7 @@ mod test_process_proposal {
             match process_tx(
                 Tx::try_from(response.tx.as_ref()).expect("Test failed"),
             )
-            .expect("Test failed")
+                .expect("Test failed")
             {
                 TxType::Decrypted(DecryptedTx::Undecryptable(inner)) => {
                     assert_eq!(
@@ -650,8 +650,20 @@ mod test_process_proposal {
         let keypair = crate::wallet::defaults::daewon_keypair();
         let pubkey = EncryptionKey::default();
         // not valid tx bytes
-        let tx = "garbage data".as_bytes().to_owned();
-        let inner_tx = EncryptedTx::encrypt(&tx, pubkey);
+
+        let tx_code = "garbage code".as_bytes().to_owned();
+        let tx_data = "garbage data".as_bytes().to_owned().clone();
+        let tx_timestamp = "garbage timestamp".as_bytes().to_owned().clone();
+        //let tx = Tx::new(tx_code,Some(tx_data));
+        //let (hash_to_encrypt,code_to_encrypt,
+        //    data_to_encrypt, ts_to_encrypt) = tx.tx_to_encrypt();
+        let tx = [tx_code.clone(),tx_data.clone(),tx_timestamp.clone()].concat();
+        let tx :&[u8] = &tx;
+        let inner_tx =
+            EncryptedTx::encrypt(
+                &tx_code,&tx_code,
+                &tx_data, &tx_timestamp, pubkey,
+            );
         let wrapper = WrapperTx {
             fee: Fee {
                 amount: 0.into(),
@@ -668,7 +680,7 @@ mod test_process_proposal {
             shell.enqueue_tx(wrapper.clone());
             Tx::from(TxType::Decrypted(DecryptedTx::Undecryptable(
                 #[allow(clippy::redundant_clone)]
-                wrapper.clone(),
+                    wrapper.clone(),
             )))
         } else {
             wrapper.sign(&keypair).expect("Test failed")
@@ -683,7 +695,7 @@ mod test_process_proposal {
             match process_tx(
                 Tx::try_from(response.tx.as_ref()).expect("Test failed"),
             )
-            .expect("Test failed")
+                .expect("Test failed")
             {
                 TxType::Decrypted(DecryptedTx::Undecryptable(inner)) => {
                     assert_eq!(

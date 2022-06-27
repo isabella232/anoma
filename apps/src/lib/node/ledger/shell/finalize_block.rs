@@ -554,7 +554,7 @@ mod test_finalize_block {
     /// check that the correct event is returned. Check that it does
     /// not appear in the queue of txs to be decrypted
     #[test]
-    fn test_process_proposal_rejected_wrapper_tx() {
+    fn test_process_proposal_rejected_wrapper_tx_not_in_tx_queue() {
         let (mut shell, _) = setup();
         let keypair = gen_keypair();
         let mut processed_txs = vec![];
@@ -701,7 +701,7 @@ mod test_finalize_block {
     /// removed from the queue of txs to be included in the next block
     /// proposal
     #[test]
-    fn test_process_proposal_rejected_decrypted_tx() {
+    fn test_process_proposal_rejected_decrypted_tx_not_in_tx_queue() {
         let (mut shell, _) = setup();
         let keypair = gen_keypair();
         let raw_tx = Tx::new(
@@ -802,16 +802,19 @@ mod test_finalize_block {
     /// Test that if a tx is undecryptable, it is applied
     /// but the tx result contains the appropriate error code.
     #[test]
-    fn test_undecryptable_returns_error_code() {
+    fn test_undecryptable_returns_error_code_1() {
         let (mut shell, _) = setup();
 
         let keypair = crate::wallet::defaults::daewon_keypair();
         let pubkey = EncryptionKey::default();
         // not valid tx bytes
-        let tx = "garbage data".as_bytes().to_owned();
+        let tx_code = "garbage code".as_bytes().to_owned();
+        let tx_code_hash = &hash_tx(tx_code).0;
+        let tx_data = "garbage data".as_bytes().to_owned();
+        let ts = "01/10/1995".as_bytes();
         let inner_tx =
             anoma::types::transaction::encrypted::EncryptedTx::encrypt(
-                &tx, pubkey,
+                tx_code_hash,tx_code, tx_data, ts, pubkey,
             );
         let wrapper = WrapperTx {
             fee: Fee {
@@ -828,7 +831,7 @@ mod test_finalize_block {
             tx: Tx::from(TxType::Decrypted(DecryptedTx::Undecryptable(
                 wrapper.clone(),
             )))
-            .to_bytes(),
+                .to_bytes(),
             result: TxResult {
                 code: ErrorCodes::Ok.into(),
                 info: "".into(),
@@ -878,10 +881,15 @@ mod test_finalize_block {
         let keypair = crate::wallet::defaults::daewon_keypair();
         let pubkey = EncryptionKey::default();
         // not valid tx bytes
-        let tx = "garbage data".as_bytes().to_owned();
+        let tx_code = "garbage code".as_bytes().to_owned();
+        let tx_data = "garbage data".as_bytes().to_owned();
+        let tx = Tx::new(tx_code,Some(tx_data));
+        let (hash_to_encrypt,code_to_encrypt,
+            data_to_encrypt, ts_to_encrypt) = tx.tx_to_encrypt();
         let inner_tx =
             anoma::types::transaction::encrypted::EncryptedTx::encrypt(
-                &tx, pubkey,
+                &hash_to_encrypt,&code_to_encrypt,
+                &data_to_encrypt, &ts_to_encrypt, pubkey,
             );
         let wrapper = WrapperTx {
             fee: Fee {
@@ -892,13 +900,13 @@ mod test_finalize_block {
             epoch: Epoch(0),
             gas_limit: 0.into(),
             inner_tx,
-            tx_hash: hash_tx(&tx),
+            tx_hash: hash_tx(&tx.to_bytes()),
         };
         let processed_tx = ProcessedTx {
             tx: Tx::from(TxType::Decrypted(DecryptedTx::Undecryptable(
                 wrapper,
             )))
-            .to_bytes(),
+                .to_bytes(),
             result: TxResult {
                 code: ErrorCodes::Ok.into(),
                 info: "".into(),
@@ -936,7 +944,7 @@ mod test_finalize_block {
                     .value
                     .clone(),
             )
-            .expect("Test failed");
+                .expect("Test failed");
             assert!(log.contains("Transaction could not be decrypted."))
         }
         // check that the corresponding wrapper tx was removed from the queue

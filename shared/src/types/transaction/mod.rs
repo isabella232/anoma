@@ -132,14 +132,14 @@ fn iterable_to_string<T: fmt::Display>(
 
 /// A tx data type to update an account's validity predicate
 #[derive(
-    Debug,
-    Clone,
-    PartialEq,
-    BorshSerialize,
-    BorshDeserialize,
-    BorshSchema,
-    Serialize,
-    Deserialize,
+Debug,
+Clone,
+PartialEq,
+BorshSerialize,
+BorshDeserialize,
+BorshSchema,
+Serialize,
+Deserialize,
 )]
 pub struct UpdateVp {
     /// An address of the account
@@ -150,14 +150,14 @@ pub struct UpdateVp {
 
 /// A tx data type to initialize a new established account
 #[derive(
-    Debug,
-    Clone,
-    PartialEq,
-    BorshSerialize,
-    BorshDeserialize,
-    BorshSchema,
-    Serialize,
-    Deserialize,
+Debug,
+Clone,
+PartialEq,
+BorshSerialize,
+BorshDeserialize,
+BorshSchema,
+Serialize,
+Deserialize,
 )]
 pub struct InitAccount {
     /// Public key to be written into the account's storage. This can be used
@@ -171,14 +171,14 @@ pub struct InitAccount {
 /// A tx data type to initialize a new validator account and its staking reward
 /// account.
 #[derive(
-    Debug,
-    Clone,
-    PartialEq,
-    BorshSerialize,
-    BorshDeserialize,
-    BorshSchema,
-    Serialize,
-    Deserialize,
+Debug,
+Clone,
+PartialEq,
+BorshSerialize,
+BorshDeserialize,
+BorshSchema,
+Serialize,
+Deserialize,
 )]
 pub struct InitValidator {
     /// Public key to be written into the account's storage. This can be used
@@ -288,25 +288,25 @@ pub mod tx_types {
     /// returned indicating the signature was not valid
     pub fn process_tx(tx: Tx) -> Result<TxType, TxError> {
         if let Some(Ok(SignedTxData {
-            data: Some(data),
-            ref sig,
-        })) = tx
+                           data: Some(data),
+                           ref sig,
+                       })) = tx
             .data
             .as_ref()
             .map(|data| SignedTxData::try_from_slice(&data[..]))
         {
-            let signed_hash = Tx {
+           let signed_hash = Tx {
                 code: tx.code,
                 data: Some(data.clone()),
                 timestamp: tx.timestamp,
             }
-            .hash();
+                .tx_to_sign();
             match TxType::try_from(Tx {
                 code: vec![],
                 data: Some(data),
                 timestamp: tx.timestamp,
             })
-            .map_err(|err| TxError::Deserialization(err.to_string()))?
+                .map_err(|err| TxError::Deserialization(err.to_string()))?
             {
                 // verify signature and extract signed data
                 TxType::Wrapper(wrapper) => {
@@ -406,7 +406,7 @@ pub mod tx_types {
                         .expect("Test failed"),
                 ),
             )
-            .sign(&gen_keypair());
+                .sign(&gen_keypair());
 
             match process_tx(tx).expect("Test failed") {
                 TxType::Raw(raw) => assert_eq!(inner, raw),
@@ -435,8 +435,8 @@ pub mod tx_types {
                 tx.clone(),
                 Default::default(),
             )
-            .sign(&keypair)
-            .expect("Test failed");
+                .sign(&keypair)
+                .expect("Test failed");
 
             match process_tx(wrapper).expect("Test failed") {
                 TxType::Wrapper(wrapper) => {
